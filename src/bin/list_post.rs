@@ -11,14 +11,13 @@ async fn main() {
     let mesh_radio = MeshRadio{serial_port: "/dev/ttyACM0".to_string()};
     let mut mesh_writer = mesh_radio.connect().await.unwrap();
 
-    let mut i: u32 = 0;
+    let mut i: i32 = 0;
     loop {
         mesh_writer.send(DoASensorState{azimuth: i}).await.unwrap();
         i += 1;
         i = i%360;
+        std::thread::sleep(Duration::from_millis(1000));
     }
-
-    mesh_writer.send().await.unwrap();
 
     // Get max DoA value from attached Kraken SDR.
     /*let client = KrakenClient { endpoint: "http://192.168.1.106:8081".to_string()};
