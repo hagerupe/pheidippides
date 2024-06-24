@@ -307,10 +307,12 @@ pub mod meshtastic {
     use meshtastic::api::ConnectedStreamApi;
     use ::meshtastic::packet::PacketDestination::Broadcast;
     use ::meshtastic::packet::PacketRouter;
+    use meshtastic::protobufs::FromRadio;
     use ::meshtastic::types::{MeshChannel, NodeId};
     use ::meshtastic::utils::stream::build_serial_stream;
     use ::meshtastic::api::StreamApi;
     use ::meshtastic::utils;
+    use tokio::sync::mpsc::UnboundedReceiver;
 
     pub struct MeshRadio {
         pub serial_port: String
@@ -318,22 +320,28 @@ pub mod meshtastic {
     impl MeshRadio {
         pub async fn connect(&self) -> Result<MeshWriteStream, std::io::Error> {
             let stream_api = StreamApi::new();
-            // let available_ports = utils::stream::available_serial_ports().unwrap();
             let serial_stream = build_serial_stream(self.serial_port.clone(), None, None, None).unwrap();
-            let (_decoded_listener, stream_api) = stream_api.connect(serial_stream).await;
+            let (decoded_listener, stream_api) = stream_api.connect(serial_stream).await;
             let config_id = utils::generate_rand_id();
-            Ok(MeshWriteStream{stream_api: stream_api.configure(config_id).await.unwrap()})
+            Ok(MeshWriteStream{
+                decoded_listener: decoded_listener,
+                stream_api: stream_api.configure(config_id).await.unwrap()})
         }
     }
 
+    pub struct DoASensorState {
+        pub azimuth: i32
+    }
+
     pub struct MeshWriteStream {
+        pub decoded_listener: UnboundedReceiver<FromRadio>,
         pub stream_api: ConnectedStreamApi,
     }
     impl MeshWriteStream {
-        pub async fn send(&mut self) -> Result<(), std::io::Error> {
+        pub async fn send(&mut self, sense_state: DoASensorState) -> Result<(), std::io::Error> {
             let mut packet_router = NoOpRouter{};
             let channel = MeshChannel::new(0).unwrap();
-            self.stream_api.send_text(&mut packet_router, "test".to_string(), Broadcast, true, channel).await.unwrap();        
+            self.stream_api.send_text(&mut packet_router, sense_state.azimuth.to_string(), Broadcast, true, channel).await.unwrap();        
             Ok(())
         }
     }
