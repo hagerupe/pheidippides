@@ -22,7 +22,7 @@ fn handle_packet_from_radio(mesh_packet: MeshPacket) -> Result<Option<String>, s
         }
         PayloadVariant::Encrypted(_encrypted_mesh_packet) => {
             println!("Received encrypted mesh packet, not handling...");
-            return Ok(0)
+            return Ok(None)
         }
     };
 

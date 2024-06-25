@@ -117,8 +117,8 @@ pub mod cots {
                     color: IntVal { value: -1 },
                 },
                 point: Point {
-                    lat: 12.0,
-                    lon: 12.0,
+                    lat: 47.73936,
+                    lon: -122.19560,
                     ce: 10.0,
                     hae: 10.0,
                     le: 10.0,
